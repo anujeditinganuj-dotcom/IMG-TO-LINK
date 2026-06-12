@@ -1,6 +1,6 @@
 """
 ImgBB Telegram Bot — "Image To Link | Img To URL Bot"
-v2.0.0 — photo above text on /start, inline buttons below text
+v3.0.0 — Wallhaven random wallpaper + Premium emoji + ButtonStyle
 """
 
 import os
@@ -8,6 +8,8 @@ import base64
 import logging
 import time
 import asyncio
+import random
+import aiohttp
 from datetime import datetime, timezone
 
 import requests
@@ -27,20 +29,106 @@ from aiogram.types import (
 )
 
 # ─────────────────────── config ────────────────────────────────
-BOT_TOKEN      = os.getenv("BOT_TOKEN", "7512964694:AAFz7d7LoMLPm6z2P5wVKtJl_kKDN4JTDmo")
-IMGBB_KEY      = os.getenv("IMGBB_KEY", "70ee073479a71bce3aed7598ace7eee8")
+BOT_TOKEN      = os.getenv("BOT_TOKEN", "YOUR_BOT_TOKEN")
+IMGBB_KEY      = os.getenv("IMGBB_KEY",  "YOUR_IMGBB_KEY")
 IMGBB_URL      = "https://api.imgbb.com/1/upload"
 
-UPDATE_CHANNEL = os.getenv("UPDATE_CHANNEL", "https://t.me/log_ak_bots")
-SUPPORT_GROUP  = os.getenv("SUPPORT_GROUP",  "https://t.me/log_ak_bots")
+UPDATE_CHANNEL = os.getenv("UPDATE_CHANNEL", "https://t.me/your_channel")
+SUPPORT_GROUP  = os.getenv("SUPPORT_GROUP",  "https://t.me/your_group")
 
-# ── Welcome banner photo (public direct URL) ──
-# Apni koi bhi image ka direct URL yahan dalo
-WELCOME_PHOTO  = os.getenv(
-    "WELCOME_PHOTO",
-    "https://i.ibb.co/N6D7D9k0/photo-AQADUw9r-Gz7sa-VV.jpg"   # ← replace with your image URL
-)
+# ─────────────────────── Wallhaven Config ──────────────────────
+WALLHAVEN_API_KEY = os.getenv("WALLHAVEN_API_KEY", "FsXt5pwoerVZrsV3DwhRctls8YzUev9H")
 
+WALLHAVEN_QUERIES = [
+    "anime+girl+portrait", "anime+portrait+face", "anime+girl+close+up",
+    "anime+beautiful+face", "anime+school+girl", "anime+school+uniform",
+    "anime+sailor+uniform", "anime+fantasy+girl", "anime+magic+girl",
+    "anime+witch+girl", "anime+elf+girl", "anime+princess",
+    "anime+dark+girl", "anime+gothic+girl", "anime+demon+girl",
+    "anime+vampire+girl", "anime+girl+sakura", "anime+girl+nature",
+    "anime+girl+sunset", "anime+girl+rain", "anime+girl+snow",
+    "anime+girl+flowers", "anime+girl+forest", "anime+girl+summer",
+    "anime+girl+winter", "anime+girl+spring", "anime+girl+autumn",
+    "anime+kawaii+girl", "anime+cute+girl", "anime+chibi+girl",
+    "anime+warrior+girl", "anime+sword+girl", "anime+ninja+girl",
+    "anime+knight+girl", "anime+cyberpunk+girl", "anime+girl+ocean",
+    "anime+girl+sky", "anime+girl+clouds", "anime+mermaid",
+    "anime+girl+night", "anime+girl+stars", "anime+girl+moon",
+    "anime+girl+galaxy", "anime+pink+hair+girl", "anime+blue+hair+girl",
+    "anime+white+hair+girl", "anime+silver+hair+girl", "anime+red+hair+girl",
+    "anime+blonde+anime+girl", "anime+girl+smile", "anime+girl+serious",
+    "anime+kimono+girl", "anime+yukata+girl", "anime+shrine+maiden",
+    "anime+japanese+girl", "anime+waifu", "anime+girl+4k",
+    "anime+girl+aesthetic", "anime+girl+minimal", "anime+cherry+blossom",
+    "anime+boy+cool", "anime+couple", "anime+art",
+    "beautiful+girl+portrait", "asian+girl+portrait+4k",
+    "aesthetic+girl+photography", "beautiful+woman+4k",
+    "girl+nature+portrait", "model+photography+portrait",
+    "cute+girl+wallpaper", "pretty+girl+face+portrait",
+    "girl+sunset+photography", "woman+aesthetic+wallpaper",
+    "girl+flowers+photography", "beautiful+eyes+portrait",
+    "girl+rain+photography", "woman+forest+portrait",
+    "girl+city+night+photography",
+]
+
+FALLBACK_PHOTO = "https://i.ibb.co/N6D7D9k0/photo-AQADUw9r-Gz7sa-VV.jpg"
+
+# ─────────────────────── Premium Emoji IDs ─────────────────────
+E_WARN    = '<emoji id=5447644880824181073>⚠️</emoji>'
+E_INFO    = '<emoji id=5334544901428229844>ℹ️</emoji>'
+E_CROWN   = '<emoji id=5217822164362739968>👑</emoji>'
+E_SPARK   = '<emoji id=5325547803936572038>✨</emoji>'
+E_CHECK   = '<emoji id=5206607081334906820>✔️</emoji>'
+E_BOLT    = '<emoji id=5456140674028019486>⚡️</emoji>'
+E_GEAR    = '<emoji id=5341715473882955310>⚙️</emoji>'
+E_STAR    = '<emoji id=5438496463044752972>⭐️</emoji>'
+E_STOP    = '<emoji id=5260293700088511294>⛔️</emoji>'
+E_GREEN   = '<emoji id=5416081784641168838>🟢</emoji>'
+E_RED     = '<emoji id=5411225014148014586>🔴</emoji>'
+E_LINK    = '<emoji id=5271604874419647061>🔗</emoji>'
+E_PENCIL  = '<emoji id=5395444784611480792>✏️</emoji>'
+E_TIP     = '<emoji id=5422439311196834318>💡</emoji>'
+E_IMAGE   = '<emoji id=5395444784611480792>🖼</emoji>'
+E_CROSS   = '<emoji id=5210952531676504517>❌</emoji>'
+E_LOCK    = '<emoji id=5296369303661067030>🔒</emoji>'
+E_DIAMOND = '<emoji id=5217822164362739968>💎</emoji>'
+E_ROCKET  = '<emoji id=5456140674028019486>🚀</emoji>'
+E_SHIELD  = '<emoji id=5251203410396458957>🛡</emoji>'
+E_CLOCK   = '<emoji id=5386367538735104399>⌛</emoji>'
+E_ARROW   = '<emoji id=5416117059207572332>➡️</emoji>'
+E_UPLOAD  = '<emoji id=5271604874419647061>📤</emoji>'
+E_PHOTO   = '<emoji id=5395444784611480792>📷</emoji>'
+E_EXPIRY  = '<emoji id=5386367538735104399>⏰</emoji>'
+E_HELP    = '<emoji id=5334544901428229844>❓</emoji>'
+
+# ─────────────────────── Button Icon Emoji IDs ─────────────────
+ICON_INFO      = 5334544901428229844
+ICON_HELP      = 5443038326535759644
+ICON_DEV       = 5823268688874179761
+ICON_BACK      = 5447183459602669338
+ICON_GEAR      = 5341715473882955310
+ICON_PENCIL    = 5395444784611480792
+ICON_REFRESH   = 5375338737028841420
+ICON_PREMIUM   = 5217822164362739968
+ICON_IMAGE     = 5395444784611480792
+ICON_CHANNEL   = 5271604874419647061
+ICON_CLOSE     = 5210952531676504517
+ICON_HOME      = 5447183459602669338
+ICON_UPLOAD    = 5271604874419647061
+ICON_EXPIRY    = 5386367538735104399
+ICON_SUPPORT   = 5325547803936572038
+ICON_ABOUT     = 5334544901428229844
+ICON_WARNING   = 5447644880824181073
+
+# ─────────────────────── Reactions ─────────────────────────────
+REACTIONS = [
+    "👍", "❤️", "🔥", "🥰", "👏", "😁", "🤯", "😱",
+    "🎉", "🤩", "💯", "🤣", "⚡", "🏆", "😎", "👾",
+    "🌟", "✨", "💫", "🎯", "🚀", "💎", "👑", "🔥",
+    "🥹", "🫶", "🤌", "💝", "💖", "💗", "💓",
+]
+
+# ─────────────────────── Expiry config ─────────────────────────
 EXPIRY_OPTIONS = {
     "⏰ 1 Hour":  3600,
     "📅 1 Day":   86400,
@@ -71,9 +159,41 @@ class UploadState(StatesGroup):
 # ─────────────────────── per-user state ────────────────────────
 user_expiry: dict[int, int | None] = {}
 
+# ─────────────────────── Wallhaven Fetcher ─────────────────────
+async def fetch_random_wallpaper() -> str:
+    try:
+        query = random.choice(WALLHAVEN_QUERIES)
+        page  = random.randint(1, 3)
+        url = (
+            f"https://wallhaven.cc/api/v1/search"
+            f"?categories=011&purity=100&q={query}"
+            f"&sorting=random&page={page}&apikey={WALLHAVEN_API_KEY}"
+        )
+        async with aiohttp.ClientSession() as session:
+            async with session.get(url, timeout=aiohttp.ClientTimeout(total=10)) as resp:
+                resp.raise_for_status()
+                data = await resp.json()
+                images = data.get("data", [])
+                if not images:
+                    url_fallback = (
+                        f"https://wallhaven.cc/api/v1/search"
+                        f"?categories=011&purity=100&sorting=random&apikey={WALLHAVEN_API_KEY}"
+                    )
+                    async with session.get(url_fallback, timeout=aiohttp.ClientTimeout(total=10)) as resp2:
+                        data2 = await resp2.json()
+                        images = data2.get("data", [])
+                if not images:
+                    return FALLBACK_PHOTO
+                chosen = random.choice(images)
+                image_url = chosen.get("path", FALLBACK_PHOTO)
+                log.info(f"Wallhaven | Query: {query} | Page: {page} | Image: {image_url}")
+                return image_url
+    except Exception as e:
+        log.error(f"Wallhaven fetch failed: {e}")
+        return FALLBACK_PHOTO
+
 # ─────────────────────── keyboards ─────────────────────────────
 def main_kb() -> ReplyKeyboardMarkup:
-    """Bottom reply keyboard — always visible."""
     return ReplyKeyboardMarkup(
         keyboard=[
             [KeyboardButton(text="📷 Upload Image"), KeyboardButton(text="🔗 Upload URL")],
@@ -95,28 +215,22 @@ def expiry_kb() -> ReplyKeyboardMarkup:
     )
 
 def start_inline_kb() -> InlineKeyboardMarkup:
-    """Inline buttons shown below the welcome text."""
+    """Inline buttons with small caps — channel, support, about."""
     return InlineKeyboardMarkup(inline_keyboard=[
         [
-            InlineKeyboardButton(text="📢 Update Channel ↗️", url=UPDATE_CHANNEL),
-            InlineKeyboardButton(text="💬 Support Group ↗️",  url=SUPPORT_GROUP),
+            InlineKeyboardButton(text="📢 ᴜᴘᴅᴀᴛᴇ ᴄʜᴀɴɴᴇʟ ↗️", url=UPDATE_CHANNEL),
+            InlineKeyboardButton(text="💬 sᴜᴘᴘᴏʀᴛ ɢʀᴏᴜᴘ ↗️",  url=SUPPORT_GROUP),
         ],
         [
-            InlineKeyboardButton(text="• ℹ️ About •", callback_data="about"),
+            InlineKeyboardButton(text="• ℹ️ ᴀʙᴏᴜᴛ •", callback_data="about"),
         ],
     ])
 
 def result_inline_kb(direct_url: str) -> InlineKeyboardMarkup:
     return InlineKeyboardMarkup(inline_keyboard=[
         [
-            InlineKeyboardButton(
-                text="📋 Copy Link 🔗",
-                url=direct_url,
-            ),
-            InlineKeyboardButton(
-                text="↗️ Share Link 🔗",
-                url=f"https://t.me/share/url?url={direct_url}",
-            ),
+            InlineKeyboardButton(text="📋 ᴄᴏᴘʏ ʟɪɴᴋ 🔗", url=direct_url),
+            InlineKeyboardButton(text="↗️ sʜᴀʀᴇ ʟɪɴᴋ 🔗", url=f"https://t.me/share/url?url={direct_url}"),
         ]
     ])
 
@@ -198,21 +312,21 @@ async def upload_to_imgbb(
 def build_result_text(r: dict, user_name: str, user_id: int, elapsed: float) -> str:
     elapsed_s = int(elapsed)
     return (
-        "✅ <b>Image Uploaded Successfully!</b>\n\n"
+        f"{E_CHECK} <b>Image Uploaded Successfully!</b>\n\n"
         "<blockquote>"
-        f"• <b>Name:</b> {r['name']}\n"
-        f"• <b>Direct URL:</b> <a href=\"{r['url']}\">{r['url']}</a>\n"
-        f"• <b>Viewer Page:</b> <a href=\"{r['viewer']}\">{r['viewer']}</a>\n"
-        f"• <b>Thumbnail:</b> <a href=\"{r['thumb']}\">{r['thumb']}</a>\n"
-        f"• <b>Width:</b> {r['width']} | <b>Height:</b> {r['height']}\n"
-        f"• <b>Size:</b> {r['size_kb']} KB and {r['size_bytes']} Bytes\n"
-        f"• <b>File Name:</b> {r['filename']}\n"
-        f"• <b>Mime:</b> {r['mime']} | <b>Ext:</b> {r['ext']}\n"
-        f"• <b>Expiry:</b> {r['expiry']}\n"
-        f"• <b>Upload Time:</b> {r['upload_time']} UTC"
+        f"{E_IMAGE} <b>Name:</b> {r['name']}\n"
+        f"{E_LINK} <b>Direct URL:</b> <a href=\"{r['url']}\">{r['url']}</a>\n"
+        f"{E_ARROW} <b>Viewer Page:</b> <a href=\"{r['viewer']}\">{r['viewer']}</a>\n"
+        f"{E_PHOTO} <b>Thumbnail:</b> <a href=\"{r['thumb']}\">{r['thumb']}</a>\n"
+        f"{E_INFO} <b>Width:</b> {r['width']} | <b>Height:</b> {r['height']}\n"
+        f"{E_DIAMOND} <b>Size:</b> {r['size_kb']} KB and {r['size_bytes']} Bytes\n"
+        f"{E_PENCIL} <b>File Name:</b> {r['filename']}\n"
+        f"{E_GEAR} <b>Mime:</b> {r['mime']} | <b>Ext:</b> {r['ext']}\n"
+        f"{E_EXPIRY} <b>Expiry:</b> {r['expiry']}\n"
+        f"{E_CLOCK} <b>Upload Time:</b> {r['upload_time']} UTC"
         "</blockquote>\n\n"
-        f"⏰ <b>Time Taken:</b> {elapsed_s}s\n"
-        f"👤 <b>User:</b> {user_name} (ID: <code>{user_id}</code>)"
+        f"{E_BOLT} <b>Time Taken:</b> {elapsed_s}s\n"
+        f"{E_CROWN} <b>User:</b> {user_name} (ID: <code>{user_id}</code>)"
     )
 
 # ─────────────────────── /start ────────────────────────────────
@@ -221,40 +335,55 @@ async def cmd_start(msg: Message, state: FSMContext):
     await state.clear()
 
     welcome_text = (
-        "👋 <b>Welcome to 🖼 Image To Link Bot | 🔗 Img To URL Bot!</b>\n\n"
-        "<blockquote>🚀 <b>Lightning Fast Image Hosting</b>\n"
-        "Send me any image or URL, and I will instantly upload it to "
-        "the cloud, providing you with a permanent, direct URL.</blockquote>\n\n"
-        "🔞 <b>18+ content is strictly prohibited!</b> "
-        "Violators will be banned permanently.\n\n"
-        "<blockquote>📌 <b>System Specifications</b>\n"
-        "• Supported Formats: JPG, PNG, BMP, GIF, TIFF, WEBP\n"
-        "• Maximum File Size: 32MB</blockquote>\n\n"
-        f"👤 Session: {msg.from_user.first_name} (ID: <code>{msg.from_user.id}</code>)"
+        f"{E_STAR} <b>Welcome to {E_IMAGE} Image To Link Bot | {E_LINK} Img To URL Bot!</b>\n\n"
+        f"<blockquote>{E_ROCKET} <b>Lightning Fast Image Hosting</b>\n"
+        f"Send me any image or URL, and I will instantly upload it to "
+        f"the cloud, providing you with a permanent, direct URL.</blockquote>\n\n"
+        f"{E_STOP} <b>18+ content is strictly prohibited!</b> "
+        f"Violators will be banned permanently.\n\n"
+        f"<blockquote>{E_INFO} <b>System Specifications</b>\n"
+        f"{E_CHECK} Supported Formats: JPG, PNG, BMP, GIF, TIFF, WEBP\n"
+        f"{E_SHIELD} Maximum File Size: 32MB</blockquote>\n\n"
+        f"{E_CROWN} Session: {msg.from_user.first_name} (ID: <code>{msg.from_user.id}</code>)"
     )
 
+    # Fetch random Wallhaven wallpaper
+    photo_url = await fetch_random_wallpaper()
+
     try:
-        # ── Photo pehle, text + inline buttons uske caption mein ──
         await msg.answer_photo(
-            photo=WELCOME_PHOTO,
+            photo=photo_url,
             caption=welcome_text,
-            parse_mode="HTML",
-            reply_markup=start_inline_kb(),   # inline buttons photo ke neeche
-        )
-    except Exception:
-        # Agar photo fail ho toh sirf text bhejo
-        await msg.answer(
-            welcome_text,
             parse_mode="HTML",
             reply_markup=start_inline_kb(),
         )
+    except Exception:
+        # fallback to static photo if wallhaven fails
+        try:
+            await msg.answer_photo(
+                photo=FALLBACK_PHOTO,
+                caption=welcome_text,
+                parse_mode="HTML",
+                reply_markup=start_inline_kb(),
+            )
+        except Exception:
+            await msg.answer(
+                welcome_text,
+                parse_mode="HTML",
+                reply_markup=start_inline_kb(),
+            )
 
-    # Bottom reply keyboard (Upload Image / Upload URL / Set Expiry / Help)
     await msg.answer(
-        "👇 <b>Choose an option:</b>",
+        f"{E_ARROW} <b>Choose an option:</b>",
         parse_mode="HTML",
         reply_markup=main_kb(),
     )
+
+    # Random reaction on start
+    try:
+        await react(msg, random.choice(REACTIONS))
+    except Exception:
+        pass
 
 # ─────────────────────── /help ─────────────────────────────────
 @dp.message(Command("help"))
@@ -263,17 +392,17 @@ async def cmd_help(msg: Message, state: FSMContext):
     await state.clear()
     uid = msg.from_user.id
     await msg.answer(
-        "📖 <b>How To Use Image To Link Bot</b>\n\n"
-        "1️⃣ Send me any image (photo or file).\n"
-        "2️⃣ I will upload it to ImgBB cloud storage.\n"
-        "3️⃣ You will get a permanent direct URL!\n\n"
-        "📌 Supported Formats: JPG, PNG, BMP, GIF, TIFF, WEBP\n"
-        "📦 Max Size: 32MB\n\n"
-        "🤖 <b>Features:</b>\n"
-        "  📷 <b>Upload Image</b> — Send any image to upload\n"
-        "  🔗 <b>Upload URL</b> — Upload image from a URL\n"
-        f"  ⏰ <b>Set Expiry</b> — Set auto-delete timer (current: {expiry_str(uid)})\n"
-        "  ✏️ <b>Caption</b> — Add caption for custom filename",
+        f"{E_INFO} <b>How To Use Image To Link Bot</b>\n\n"
+        f"{E_ARROW} 1️⃣ Send me any image (photo or file).\n"
+        f"{E_ARROW} 2️⃣ I will upload it to ImgBB cloud storage.\n"
+        f"{E_ARROW} 3️⃣ You will get a permanent direct URL!\n\n"
+        f"<blockquote>{E_GEAR} Supported Formats: JPG, PNG, BMP, GIF, TIFF, WEBP\n"
+        f"{E_DIAMOND} Max Size: 32MB</blockquote>\n\n"
+        f"{E_ROCKET} <b>Features:</b>\n"
+        f"  {E_PHOTO} <b>Upload Image</b> — Send any image to upload\n"
+        f"  {E_LINK} <b>Upload URL</b> — Upload image from a URL\n"
+        f"  {E_EXPIRY} <b>Set Expiry</b> — Set auto-delete timer (current: {expiry_str(uid)})\n"
+        f"  {E_PENCIL} <b>Caption</b> — Add caption for custom filename",
         parse_mode="HTML",
         reply_markup=main_kb(),
     )
@@ -281,13 +410,14 @@ async def cmd_help(msg: Message, state: FSMContext):
 # ─────────────────────── /about ────────────────────────────────
 async def send_about(target):
     text = (
-        "ℹ️ <b>ABOUT IMAGE TO LINK BOT</b>\n\n"
-        "<blockquote>🤖 <b>Bot Info:</b>\n"
-        "• Name: Image To Link Bot\n"
-        "• Version: 2.0.0 (aiogram)\n"
-        "• Features: NSFW Detection & Auto-Ban</blockquote>\n\n"
-        "⚠️ <b>18+ content strictly prohibited!</b>\n"
-        "Violation = Permanent Ban 🚫"
+        f"{E_INFO} <b>ABOUT IMAGE TO LINK BOT</b>\n\n"
+        f"<blockquote>{E_ROCKET} <b>Bot Info:</b>\n"
+        f"{E_STAR} Name: Image To Link Bot\n"
+        f"{E_GEAR} Version: 3.0.0 (aiogram)\n"
+        f"{E_SHIELD} Features: Wallhaven Wallpapers + NSFW Detection & Auto-Ban\n"
+        f"{E_BOLT} Library: aiogram async</blockquote>\n\n"
+        f"{E_STOP} <b>18+ content strictly prohibited!</b>\n"
+        f"Violation = Permanent Ban {E_CROSS}"
     )
     if isinstance(target, Message):
         await target.answer(text, parse_mode="HTML", reply_markup=main_kb())
@@ -314,9 +444,9 @@ async def copy_link_cb(cb: CallbackQuery):
 async def ask_for_image(msg: Message, state: FSMContext):
     await state.set_state(UploadState.waiting_for_image)
     await msg.answer(
-        "📷 <b>Upload Image</b>\n\n"
-        "Send me any image (photo or file) to upload!\n\n"
-        "💡 Tap any button to cancel.",
+        f"{E_PHOTO} <b>Upload Image</b>\n\n"
+        f"{E_ARROW} Send me any image (photo or file) to upload!\n\n"
+        f"{E_TIP} Tap any button to cancel.",
         parse_mode="HTML",
         reply_markup=main_kb(),
     )
@@ -327,7 +457,7 @@ async def _do_upload_image(msg: Message, state: FSMContext):
     uname  = msg.from_user.first_name
     name   = msg.caption or None
 
-    status_msg = await msg.answer("⏳ Uploading...")
+    status_msg = await msg.answer(f"{E_CLOCK} <b>Uploading...</b>", parse_mode="HTML")
     t_start    = time.monotonic()
 
     try:
@@ -355,12 +485,12 @@ async def _do_upload_image(msg: Message, state: FSMContext):
             parse_mode="HTML",
             reply_markup=kb,
         )
-        await react(msg, "🤩")
+        await react(msg, random.choice(["🤩", "🔥", "✨", "💎", "⚡"]))
         await react(sent, "🔗")
 
     except Exception as e:
         await status_msg.delete()
-        await msg.answer(f"❌ <b>Upload failed:</b> {e}", parse_mode="HTML")
+        await msg.answer(f"{E_CROSS} <b>Upload failed:</b> {e}", parse_mode="HTML")
 
 @dp.message(UploadState.waiting_for_image, F.photo | F.document)
 async def handle_image_in_state(msg: Message, state: FSMContext):
@@ -375,9 +505,9 @@ async def handle_direct_image(msg: Message, state: FSMContext):
 async def ask_for_url(msg: Message, state: FSMContext):
     await state.set_state(UploadState.waiting_for_url)
     await msg.answer(
-        "🔗 <b>Upload URL</b>\n\n"
-        "Send me an image URL to upload.\n\n"
-        "💡 Tap any button to cancel.",
+        f"{E_LINK} <b>Upload URL</b>\n\n"
+        f"{E_ARROW} Send me an image URL to upload.\n\n"
+        f"{E_TIP} Tap any button to cancel.",
         parse_mode="HTML",
         reply_markup=main_kb(),
     )
@@ -386,14 +516,14 @@ async def ask_for_url(msg: Message, state: FSMContext):
 async def handle_url(msg: Message, state: FSMContext):
     url = msg.text.strip()
     if not url.startswith("http"):
-        await msg.answer("❌ Invalid URL. Send a valid http/https image URL.")
+        await msg.answer(f"{E_CROSS} Invalid URL. Send a valid http/https image URL.")
         return
 
     await state.clear()
     uid    = msg.from_user.id
     uname  = msg.from_user.first_name
 
-    status  = await msg.answer("⏳ Uploading...")
+    status  = await msg.answer(f"{E_CLOCK} <b>Uploading...</b>", parse_mode="HTML")
     t_start = time.monotonic()
 
     try:
@@ -411,11 +541,11 @@ async def handle_url(msg: Message, state: FSMContext):
             parse_mode="HTML",
             reply_markup=kb,
         )
-        await react(msg, "🤩")
+        await react(msg, random.choice(["🤩", "🔥", "✨", "💎", "⚡"]))
         await react(sent, "🔗")
     except Exception as e:
         await status.delete()
-        await msg.answer(f"❌ <b>Upload failed:</b> {e}", parse_mode="HTML")
+        await msg.answer(f"{E_CROSS} <b>Upload failed:</b> {e}", parse_mode="HTML")
 
 # ─────────────────────── Set Expiry ────────────────────────────
 @dp.message(F.text == "⏰ Set Expiry")
@@ -423,8 +553,8 @@ async def ask_expiry(msg: Message, state: FSMContext):
     await state.clear()
     uid = msg.from_user.id
     await msg.answer(
-        f"⏰ <b>Select Auto-Delete Timer</b>\n\n"
-        f"📌 Current Setting: <b>{expiry_str(uid)}</b>",
+        f"{E_EXPIRY} <b>Select Auto-Delete Timer</b>\n\n"
+        f"{E_INFO} Current Setting: <b>{expiry_str(uid)}</b>",
         parse_mode="HTML",
         reply_markup=expiry_kb(),
     )
@@ -436,7 +566,7 @@ async def set_expiry(msg: Message):
     user_expiry[uid] = secs
     label = EXPIRY_LABEL_MAP.get(secs, "Never")
     await msg.answer(
-        f"✅ <b>Expiry Set To: {label}</b>",
+        f"{E_CHECK} <b>Expiry Set To: {label}</b>",
         parse_mode="HTML",
         reply_markup=main_kb(),
     )
@@ -444,7 +574,7 @@ async def set_expiry(msg: Message):
 @dp.message(F.text == "⬅️ Back")
 async def go_back(msg: Message, state: FSMContext):
     await state.clear()
-    await msg.answer("🏠 Main Menu", reply_markup=main_kb())
+    await msg.answer(f"{E_ARROW} Main Menu", reply_markup=main_kb())
 
 # ─────────────────────── run ───────────────────────────────────
 async def main():
