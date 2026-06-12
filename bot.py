@@ -37,13 +37,13 @@ from aiogram.types import (
 )
 
 # ─────────────────────── config ────────────────────────────────
-BOT_TOKEN     = os.getenv("BOT_TOKEN", "7512964694:AAFNZbJy6RBIuSUQtNLiQhiRTK1ccBczPeg")
+BOT_TOKEN     = os.getenv("BOT_TOKEN", "YOUR_BOT_TOKEN_HERE")
 IMGBB_KEY     = os.getenv("IMGBB_KEY", "70ee073479a71bce3aed7598ace7eee8")
 IMGBB_URL     = "https://api.imgbb.com/1/upload"
 
 # 👇 Apna channel aur group link yahan dalo
-UPDATE_CHANNEL = os.getenv("UPDATE_CHANNEL", "https://t.me/log_ak_bots")
-SUPPORT_GROUP  = os.getenv("SUPPORT_GROUP",  "https://t.me/log_ak_bots")
+UPDATE_CHANNEL = os.getenv("UPDATE_CHANNEL", "https://t.me/your_channel")
+SUPPORT_GROUP  = os.getenv("SUPPORT_GROUP",  "https://t.me/your_group")
 
 EXPIRY_OPTIONS = {
     "⏰ 1 Hour":  3600,
@@ -255,7 +255,11 @@ async def cmd_start(msg: Message, state: FSMContext):
         parse_mode="HTML",
         reply_markup=main_kb(),
     )
-    
+    # Inline buttons alag message mein (screenshot jaisa)
+    await msg.answer(
+        "👇 Quick Links",
+        reply_markup=start_inline_kb(),
+    )
 
 # ─────────────────────── /help ─────────────────────────────────
 @dp.message(Command("help"))
