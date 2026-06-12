@@ -255,11 +255,7 @@ async def cmd_start(msg: Message, state: FSMContext):
         parse_mode="HTML",
         reply_markup=main_kb(),
     )
-    # Inline buttons alag message mein (screenshot jaisa)
-    await msg.answer(
-        "👇 Quick Links",
-        reply_markup=start_inline_kb(),
-    )
+    
 
 # ─────────────────────── /help ─────────────────────────────────
 @dp.message(Command("help"))
