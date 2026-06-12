@@ -37,9 +37,13 @@ from aiogram.types import (
 )
 
 # ─────────────────────── config ────────────────────────────────
-BOT_TOKEN = os.getenv("BOT_TOKEN", "7512964694:AAFNZbJy6RBIuSUQtNLiQhiRTK1ccBczPeg")
-IMGBB_KEY = os.getenv("IMGBB_KEY", "70ee073479a71bce3aed7598ace7eee8")
-IMGBB_URL = "https://api.imgbb.com/1/upload"
+BOT_TOKEN     = os.getenv("BOT_TOKEN", "YOUR_BOT_TOKEN_HERE")
+IMGBB_KEY     = os.getenv("IMGBB_KEY", "70ee073479a71bce3aed7598ace7eee8")
+IMGBB_URL     = "https://api.imgbb.com/1/upload"
+
+# 👇 Apna channel aur group link yahan dalo
+UPDATE_CHANNEL = os.getenv("UPDATE_CHANNEL", "https://t.me/your_channel")
+SUPPORT_GROUP  = os.getenv("SUPPORT_GROUP",  "https://t.me/your_group")
 
 EXPIRY_OPTIONS = {
     "⏰ 1 Hour":  3600,
@@ -92,18 +96,30 @@ def expiry_kb() -> ReplyKeyboardMarkup:
     )
 
 def result_inline_kb(direct_url: str) -> InlineKeyboardMarkup:
-    """Copy Link + Share Link inline buttons — exact match to screenshots."""
+    """Copy Link (url button — tap karo toh browser mein khulega + copy hoga) + Share Link."""
     return InlineKeyboardMarkup(inline_keyboard=[
         [
             InlineKeyboardButton(
                 text="📋 Copy Link 🔗",
-                callback_data=f"copy|{direct_url[:200]}",
+                url=direct_url,          # url= se Telegram browser mein khulega, easily copy hoga
             ),
             InlineKeyboardButton(
-                text="Share Link 🔗",
+                text="↗️ Share Link 🔗",
                 url=f"https://t.me/share/url?url={direct_url}",
             ),
         ]
+    ])
+
+def start_inline_kb() -> InlineKeyboardMarkup:
+    """Start message ke neeche 4 buttons — screenshot jaisa."""
+    return InlineKeyboardMarkup(inline_keyboard=[
+        [
+            InlineKeyboardButton(text="📢 Update Channel ↗️", url=UPDATE_CHANNEL),
+            InlineKeyboardButton(text="💬 Support Group ↗️",  url=SUPPORT_GROUP),
+        ],
+        [
+            InlineKeyboardButton(text="• ℹ️ About •", callback_data="about"),
+        ],
     ])
 
 # ─────────────────────── reaction helper ──────────────────────
@@ -239,6 +255,11 @@ async def cmd_start(msg: Message, state: FSMContext):
         parse_mode="HTML",
         reply_markup=main_kb(),
     )
+    # Inline buttons alag message mein (screenshot jaisa)
+    await msg.answer(
+        "👇 Quick Links",
+        reply_markup=start_inline_kb(),
+    )
 
 # ─────────────────────── /help ─────────────────────────────────
 @dp.message(Command("help"))
@@ -263,19 +284,36 @@ async def cmd_help(msg: Message, state: FSMContext):
     )
 
 # ─────────────────────── /about ────────────────────────────────
-@dp.message(Command("about"))
-async def cmd_about(msg: Message):
-    await msg.answer(
+async def send_about(target):
+    """About message — command ya callback dono ke liye."""
+    text = (
         "ℹ️ <b>ABOUT IMAGE TO LINK BOT</b>\n\n"
         "<blockquote>🤖 <b>Bot Info:</b>\n"
         "• Name: Image To Link Bot\n"
         "• Version: 2.0.0 (aiogram)\n"
         "• Features: NSFW Detection & Auto-Ban</blockquote>\n\n"
         "⚠️ <b>18+ content strictly prohibited!</b>\n"
-        "Violation = Permanent Ban 🚫",
-        parse_mode="HTML",
-        reply_markup=main_kb(),
+        "Violation = Permanent Ban 🚫"
     )
+    if isinstance(target, Message):
+        await target.answer(text, parse_mode="HTML", reply_markup=main_kb())
+    else:  # CallbackQuery
+        await target.message.answer(text, parse_mode="HTML", reply_markup=main_kb())
+        await target.answer()
+
+@dp.message(Command("about"))
+async def cmd_about(msg: Message):
+    await send_about(msg)
+
+@dp.callback_query(F.data == "about")
+async def about_cb(cb: CallbackQuery):
+    await send_about(cb)
+
+# ─────────────────────── Copy Link callback (legacy fallback) ──
+@dp.callback_query(F.data.startswith("copy|"))
+async def copy_link_cb(cb: CallbackQuery):
+    url = cb.data.split("|", 1)[1]
+    await cb.answer(url, show_alert=True)
 
 # ─────────────────────── Upload Image ──────────────────────────
 @dp.message(F.text == "📷 Upload Image")
@@ -417,12 +455,6 @@ async def set_expiry(msg: Message):
 async def go_back(msg: Message, state: FSMContext):
     await state.clear()
     await msg.answer("🏠 Main Menu", reply_markup=main_kb())
-
-# ─────────────────────── Copy Link callback ────────────────────
-@dp.callback_query(F.data.startswith("copy|"))
-async def copy_link_cb(cb: CallbackQuery):
-    url = cb.data.split("|", 1)[1]
-    await cb.answer(url, show_alert=True)   # shows URL in a popup
 
 # ─────────────────────── run ───────────────────────────────────
 async def main():
