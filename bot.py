@@ -80,6 +80,7 @@ def main_kb() -> ReplyKeyboardMarkup:
             [KeyboardButton(text="⏰ Set Expiry"),   KeyboardButton(text="❓ Help")],
         ],
         resize_keyboard=True,
+        is_persistent=False,
     )
 
 def expiry_kb() -> ReplyKeyboardMarkup:
@@ -90,6 +91,7 @@ def expiry_kb() -> ReplyKeyboardMarkup:
             [KeyboardButton(text="∞ Never"),    KeyboardButton(text="⬅️ Back")],
         ],
         resize_keyboard=True,
+        is_persistent=False,
     )
 
 def start_inline_kb() -> InlineKeyboardMarkup:
