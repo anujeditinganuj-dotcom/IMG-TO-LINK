@@ -7,6 +7,7 @@ import asyncio
 import logging
 from health_server import start_health_server
 from bot import app
+from pyrogram import idle
 
 logging.basicConfig(
     level=logging.INFO,
@@ -15,13 +16,16 @@ logging.basicConfig(
 log = logging.getLogger(__name__)
 
 async def main():
-    # Flask health server background mein start karo
     start_health_server()
     log.info("✅ Health server started")
 
-    # Telegram bot polling start karo
-    log.info("🤖 Bot starting polling...")
-    await dp.start_polling(bot)
+    log.info("🤖 Bot starting...")
+    await app.start()
+    log.info("✅ Bot started! Listening for messages...")
+
+    await idle()
+
+    await app.stop()
 
 if __name__ == "__main__":
-    app.run()
+    asyncio.run(main())
