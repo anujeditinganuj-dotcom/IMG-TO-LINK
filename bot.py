@@ -32,7 +32,7 @@ except ImportError:
     from pyrogram.enums import ParseMode
 
 # ─────────────────────── config ────────────────────────────────
-BOT_TOKEN      = os.getenv("BOT_TOKEN", "7512964694:AAGnG9S83rpDtkqoE8EFzwAWcKw0jfLRzN4")
+BOT_TOKEN      = os.getenv("BOT_TOKEN", "7512964694:AAGnG9S83rpDtkqoE8EFzwAWcKw0jfLRzN4A")
 API_ID         = int(os.getenv("API_ID", "37476811"))
 API_HASH       = os.getenv("API_HASH", "7aa60670b871050820086c6267371ee6")
 IMGBB_KEY      = os.getenv("IMGBB_KEY", "70ee073479a71bce3aed7598ace7eee8")
