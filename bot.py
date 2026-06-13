@@ -11,6 +11,7 @@ import asyncio
 import random
 import aiohttp
 from datetime import datetime, timezone
+from bot import app
 
 import requests
 import pyrogram
@@ -593,7 +594,7 @@ async def handle_text(client: Client, msg: Message):
     if text in ["📷 Upload Image", "🔗 Upload URL", "⏰ Set Expiry",
                 "❓ Help", "⬅️ Back", "⏰ 1 Hour", "📅 1 Day",
                 "📅 7 Days", "📅 30 Days", "∞ Never"]:
-        return
+if      return
 
     # Only process URLs when in url state
     if user_state.get(uid) != "url":
@@ -636,5 +637,4 @@ async def handle_text(client: Client, msg: Message):
 
 # ─────────────────────── Run ───────────────────────────────────
 if __name__ == "__main__":
-    log.info("Bot starting with Pyrogram...")
     app.run()
