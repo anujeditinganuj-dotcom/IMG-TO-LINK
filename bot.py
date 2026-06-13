@@ -33,8 +33,8 @@ except ImportError:
 
 # ─────────────────────── config ────────────────────────────────
 BOT_TOKEN      = os.getenv("BOT_TOKEN", "7512964694:AAFz7d7LoMLPm6z2P5wVKtJl_kKDN4JTDmo")
-API_ID         = int(os.getenv("API_ID", "25757820"))
-API_HASH       = os.getenv("API_HASH", "3f6929cd4e8dce42dee56c4fc3453808")
+API_ID         = int(os.getenv("API_ID", "37476811"))
+API_HASH       = os.getenv("API_HASH", "7aa60670b871050820086c6267371ee6")
 IMGBB_KEY      = os.getenv("IMGBB_KEY", "70ee073479a71bce3aed7598ace7eee8")
 IMGBB_URL      = "https://api.imgbb.com/1/upload"
 
