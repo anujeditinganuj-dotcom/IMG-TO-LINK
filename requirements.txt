@@ -1,5 +1,0 @@
-flask==3.0.3
-pyrogram==2.0.106
-TgCrypto
-aiohttp==3.10.11
-requests==2.32.3
