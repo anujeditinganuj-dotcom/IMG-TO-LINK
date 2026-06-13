@@ -29,7 +29,7 @@ from aiogram.types import (
 )
 
 # ─────────────────────── config ────────────────────────────────
-BOT_TOKEN      = os.getenv("BOT_TOKEN", "YOUR_BOT_TOKEN")
+BOT_TOKEN      = os.getenv("BOT_TOKEN", "7512964694:AAFz7d7LoMLPm6z2P5wVKtJl_kKDN4JTDmo")
 IMGBB_KEY      = os.getenv("IMGBB_KEY",  "YOUR_IMGBB_KEY")
 IMGBB_URL      = "https://api.imgbb.com/1/upload"
 
