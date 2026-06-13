@@ -6,7 +6,7 @@ Flask health server + Telegram bot dono saath start karta hai.
 import asyncio
 import logging
 from health_server import start_health_server
-from bot import dp, bot
+from bot import app
 
 logging.basicConfig(
     level=logging.INFO,
@@ -24,4 +24,4 @@ async def main():
     await dp.start_polling(bot)
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    app.run()
