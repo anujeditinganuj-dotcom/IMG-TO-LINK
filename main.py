@@ -7,6 +7,7 @@ import asyncio
 import logging
 from health_server import start_health_server
 from bot import app
+from pyrogram import idle
 
 logging.basicConfig(
     level=logging.INFO,
@@ -22,8 +23,10 @@ async def main():
     await app.start()
     log.info("✅ Bot started! Listening for messages...")
 
-    # Bot ko alive rakhne ke liye
-    await asyncio.get_event_loop().create_future()
+    # Bot ko alive rakhta hai jab tak process band na ho
+    await idle()
+
+    await app.stop()
 
 if __name__ == "__main__":
     asyncio.run(main())
