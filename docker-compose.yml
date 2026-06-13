@@ -8,11 +8,11 @@ services:
     environment:
       - BOT_TOKEN=${BOT_TOKEN}
       - IMGBB_KEY=${IMGBB_KEY}
-      - PORT=5000
+      - PORT=8080
     ports:
-      - "5000:5000"
+      - "8080:8080"
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:5000/health"]
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
       interval: 30s
       timeout: 10s
       retries: 3
