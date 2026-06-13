@@ -1,5 +1,4 @@
 flask==3.0.3
-kurigram
 pyrogram==2.0.106
 TgCrypto
 aiohttp==3.10.11
