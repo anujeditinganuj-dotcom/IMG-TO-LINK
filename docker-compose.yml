@@ -1,0 +1,19 @@
+version: "3.9"
+
+services:
+  bot:
+    build: .
+    container_name: imgbb-telegram-bot
+    restart: unless-stopped
+    environment:
+      - BOT_TOKEN=${BOT_TOKEN}
+      - IMGBB_KEY=${IMGBB_KEY}
+      - PORT=8080
+    ports:
+      - "8080:8080"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
