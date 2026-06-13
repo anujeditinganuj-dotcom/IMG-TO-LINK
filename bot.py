@@ -30,11 +30,11 @@ from aiogram.types import (
 
 # ─────────────────────── config ────────────────────────────────
 BOT_TOKEN      = os.getenv("BOT_TOKEN", "7512964694:AAFz7d7LoMLPm6z2P5wVKtJl_kKDN4JTDmo")
-IMGBB_KEY      = os.getenv("IMGBB_KEY",  "YOUR_IMGBB_KEY")
+IMGBB_KEY      = os.getenv("IMGBB_KEY",  "70ee073479a71bce3aed7598ace7eee8")
 IMGBB_URL      = "https://api.imgbb.com/1/upload"
 
-UPDATE_CHANNEL = os.getenv("UPDATE_CHANNEL", "https://t.me/your_channel")
-SUPPORT_GROUP  = os.getenv("SUPPORT_GROUP",  "https://t.me/your_group")
+UPDATE_CHANNEL = os.getenv("UPDATE_CHANNEL", "https://t.me/log_ak_bots")
+SUPPORT_GROUP  = os.getenv("SUPPORT_GROUP",  "https://t.me/log_ak_bots")
 
 # ─────────────────────── Wallhaven Config ──────────────────────
 WALLHAVEN_API_KEY = os.getenv("WALLHAVEN_API_KEY", "FsXt5pwoerVZrsV3DwhRctls8YzUev9H")
