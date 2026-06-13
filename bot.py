@@ -1,6 +1,6 @@
 """
 ImgBB Telegram Bot — "Image To Link | Img To URL Bot"
-v3.0.0 — Wallhaven random wallpaper + Premium emoji + ButtonStyle
+v3.0.0 — Wallhaven random wallpaper + Plain Unicode Emoji (Fixed)
 """
 
 import os
@@ -73,52 +73,34 @@ WALLHAVEN_QUERIES = [
 
 FALLBACK_PHOTO = "https://i.ibb.co/N6D7D9k0/photo-AQADUw9r-Gz7sa-VV.jpg"
 
-# ─────────────────────── Premium Emoji IDs ─────────────────────
-E_WARN    = '<emoji id=5447644880824181073>⚠️</emoji>'
-E_INFO    = '<emoji id=5334544901428229844>ℹ️</emoji>'
-E_CROWN   = '<emoji id=5217822164362739968>👑</emoji>'
-E_SPARK   = '<emoji id=5325547803936572038>✨</emoji>'
-E_CHECK   = '<emoji id=5206607081334906820>✔️</emoji>'
-E_BOLT    = '<emoji id=5456140674028019486>⚡️</emoji>'
-E_GEAR    = '<emoji id=5341715473882955310>⚙️</emoji>'
-E_STAR    = '<emoji id=5438496463044752972>⭐️</emoji>'
-E_STOP    = '<emoji id=5260293700088511294>⛔️</emoji>'
-E_GREEN   = '<emoji id=5416081784641168838>🟢</emoji>'
-E_RED     = '<emoji id=5411225014148014586>🔴</emoji>'
-E_LINK    = '<emoji id=5271604874419647061>🔗</emoji>'
-E_PENCIL  = '<emoji id=5395444784611480792>✏️</emoji>'
-E_TIP     = '<emoji id=5422439311196834318>💡</emoji>'
-E_IMAGE   = '<emoji id=5395444784611480792>🖼</emoji>'
-E_CROSS   = '<emoji id=5210952531676504517>❌</emoji>'
-E_LOCK    = '<emoji id=5296369303661067030>🔒</emoji>'
-E_DIAMOND = '<emoji id=5217822164362739968>💎</emoji>'
-E_ROCKET  = '<emoji id=5456140674028019486>🚀</emoji>'
-E_SHIELD  = '<emoji id=5251203410396458957>🛡</emoji>'
-E_CLOCK   = '<emoji id=5386367538735104399>⌛</emoji>'
-E_ARROW   = '<emoji id=5416117059207572332>➡️</emoji>'
-E_UPLOAD  = '<emoji id=5271604874419647061>📤</emoji>'
-E_PHOTO   = '<emoji id=5395444784611480792>📷</emoji>'
-E_EXPIRY  = '<emoji id=5386367538735104399>⏰</emoji>'
-E_HELP    = '<emoji id=5334544901428229844>❓</emoji>'
-
-# ─────────────────────── Button Icon Emoji IDs ─────────────────
-ICON_INFO      = 5334544901428229844
-ICON_HELP      = 5443038326535759644
-ICON_DEV       = 5823268688874179761
-ICON_BACK      = 5447183459602669338
-ICON_GEAR      = 5341715473882955310
-ICON_PENCIL    = 5395444784611480792
-ICON_REFRESH   = 5375338737028841420
-ICON_PREMIUM   = 5217822164362739968
-ICON_IMAGE     = 5395444784611480792
-ICON_CHANNEL   = 5271604874419647061
-ICON_CLOSE     = 5210952531676504517
-ICON_HOME      = 5447183459602669338
-ICON_UPLOAD    = 5271604874419647061
-ICON_EXPIRY    = 5386367538735104399
-ICON_SUPPORT   = 5325547803936572038
-ICON_ABOUT     = 5334544901428229844
-ICON_WARNING   = 5447644880824181073
+# ─────────────────────── Plain Unicode Emojis (FIXED) ──────────
+# Replaced all <emoji id=...> custom premium tags with plain Unicode
+E_WARN    = '⚠️'
+E_INFO    = 'ℹ️'
+E_CROWN   = '👑'
+E_SPARK   = '✨'
+E_CHECK   = '✔️'
+E_BOLT    = '⚡️'
+E_GEAR    = '⚙️'
+E_STAR    = '⭐️'
+E_STOP    = '⛔️'
+E_GREEN   = '🟢'
+E_RED     = '🔴'
+E_LINK    = '🔗'
+E_PENCIL  = '✏️'
+E_TIP     = '💡'
+E_IMAGE   = '🖼'
+E_CROSS   = '❌'
+E_LOCK    = '🔒'
+E_DIAMOND = '💎'
+E_ROCKET  = '🚀'
+E_SHIELD  = '🛡'
+E_CLOCK   = '⌛'
+E_ARROW   = '➡️'
+E_UPLOAD  = '📤'
+E_PHOTO   = '📷'
+E_EXPIRY  = '⏰'
+E_HELP    = '❓'
 
 # ─────────────────────── Reactions ─────────────────────────────
 REACTIONS = [
@@ -215,7 +197,6 @@ def expiry_kb() -> ReplyKeyboardMarkup:
     )
 
 def start_inline_kb() -> InlineKeyboardMarkup:
-    """Inline buttons with small caps — channel, support, about."""
     return InlineKeyboardMarkup(inline_keyboard=[
         [
             InlineKeyboardButton(text="📢 ᴜᴘᴅᴀᴛᴇ ᴄʜᴀɴɴᴇʟ ↗️", url=UPDATE_CHANNEL),
@@ -358,7 +339,6 @@ async def cmd_start(msg: Message, state: FSMContext):
             reply_markup=start_inline_kb(),
         )
     except Exception:
-        # fallback to static photo if wallhaven fails
         try:
             await msg.answer_photo(
                 photo=FALLBACK_PHOTO,
@@ -379,7 +359,6 @@ async def cmd_start(msg: Message, state: FSMContext):
         reply_markup=main_kb(),
     )
 
-    # Random reaction on start
     try:
         await react(msg, random.choice(REACTIONS))
     except Exception:
@@ -414,7 +393,7 @@ async def send_about(target):
         f"<blockquote>{E_ROCKET} <b>Bot Info:</b>\n"
         f"{E_STAR} Name: Image To Link Bot\n"
         f"{E_GEAR} Version: 3.0.0 (aiogram)\n"
-        f"{E_SHIELD} Features: Wallhaven Wallpapers + NSFW Detection & Auto-Ban\n"
+        f"{E_SHIELD} Features: Wallhaven Wallpapers + NSFW Detection &amp; Auto-Ban\n"
         f"{E_BOLT} Library: aiogram async</blockquote>\n\n"
         f"{E_STOP} <b>18+ content strictly prohibited!</b>\n"
         f"Violation = Permanent Ban {E_CROSS}"
@@ -576,9 +555,12 @@ async def go_back(msg: Message, state: FSMContext):
     await state.clear()
     await msg.answer(f"{E_ARROW} Main Menu", reply_markup=main_kb())
 
-# ─────────────────────── run ───────────────────────────────────
+# ─────────────────────── run (FIXED: delete_webhook to avoid ConflictError) ───
 async def main():
     log.info("Bot starting...")
+    # Fix: Clear any existing webhook / pending updates before polling
+    # This prevents TelegramConflictError when multiple instances were running
+    await bot.delete_webhook(drop_pending_updates=True)
     await dp.start_polling(bot)
 
 if __name__ == "__main__":
