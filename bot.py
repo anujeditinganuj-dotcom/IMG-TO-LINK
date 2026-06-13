@@ -34,7 +34,7 @@ except ImportError:
 BOT_TOKEN      = os.getenv("BOT_TOKEN", "7512964694:AAGnG9S83rpDtkqoE8EFzwAWcKw0jfLRzN4")
 API_ID         = int(os.getenv("API_ID", "37476811"))
 API_HASH       = os.getenv("API_HASH", "7aa60670b871050820086c6267371ee6")
-IMGBB_KEY      = os.getenv("IMGBB_KEY", "70ee073479a71bce3aed7598ace7eee8")
+IMGBB_KEY = os.getenv("IMGBB_KEY", "03ba25de470d2ae3a13e1276332ff20b")
 IMGBB_URL      = "https://api.imgbb.com/1/upload"
 
 UPDATE_CHANNEL = os.getenv("UPDATE_CHANNEL", "https://t.me/log_ak_bots")
