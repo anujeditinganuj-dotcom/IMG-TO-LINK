@@ -2,3 +2,4 @@ aiohttp==3.x
 requests==2.32.3
 flask==3.0.3
 aiohttp
+kurigram
